@@ -1,61 +1,77 @@
 ﻿using DijkstraImpl.Data;
 
-var a = new Node("A", 0);
+//       A-----1-----B-----6------E
+//        \         / \          /
+//         \       /   \        /
+//          4     2     2      3
+//           \   /       \   /
+//            \ /         \ /
+//             C-----3-----D
+
+var a = new Node("A");
 var b = new Node("B");
 var c = new Node("C");
 var d = new Node("D");
 var e = new Node("E");
 
-a.Neighbours.Add(b, 1);
-a.Neighbours.Add(c, 4);
+a.AddNeighbour(b, 1);
+a.AddNeighbour(c, 4);
+b.AddNeighbour(c, 2);
+b.AddNeighbour(d, 2);
+b.AddNeighbour(e, 6);
+c.AddNeighbour(d, 3);
+d.AddNeighbour(e, 3);
 
-b.Neighbours.Add(a, 1);
-b.Neighbours.Add(c, 2);
-b.Neighbours.Add(d, 2);
-b.Neighbours.Add(e, 6);
+FindShortestPath(a);
 
-c.Neighbours.Add(a, 4);
-c.Neighbours.Add(b, 2);
-c.Neighbours.Add(d, 3);
+Console.ReadKey();
 
-d.Neighbours.Add(b, 2);
-d.Neighbours.Add(c, 3);
-d.Neighbours.Add(e, 3);
-
-e.Neighbours.Add(b, 6);
-e.Neighbours.Add(d, 3);
-
-var Q = new PriorityQueue<Node, int>();
-Q.Enqueue(a, 0);
-
-while (Q.Count != 0)
+void FindShortestPath(Node startNode)
 {
-    var visitingNode = Q.Dequeue();
-    visitingNode.IsVisited = true;
+    var Q = new PriorityQueue<Node, int>();
+    startNode.DistanceFromRoute = 0;
+    Q.Enqueue(startNode, 0);
 
-    foreach (var neigbour in visitingNode.Neighbours)
+    while (Q.Count != 0)
     {
-        if (neigbour.Key.IsVisited == true)
+        var visitingNode = Q.Dequeue();
+        visitingNode.IsVisited = true;
+
+        foreach (var neigbour in visitingNode.Neighbours)
         {
-            continue;
-        }
+            if (neigbour.Node.IsVisited == true)
+            {
+                continue;
+            }
 
-        var dv = neigbour.Key.Distance;
-        var du = visitingNode.Distance;
-        var duv = neigbour.Value;
+            var nNodeRouteDist = neigbour.Node.DistanceFromRoute;
+            var vNodeRouteDist = visitingNode.DistanceFromRoute;
+            var vNodeToNNodeDist = neigbour.Distance;
 
-        var parent = visitingNode.Name;
-
-        if (dv > du + duv)
-        {
-            neigbour.Key.Parent = parent;
-            neigbour.Key.Distance = du + duv;
-            Q.Enqueue(neigbour.Key, neigbour.Key.Distance);
+            if (nNodeRouteDist > vNodeRouteDist + vNodeToNNodeDist)
+            {
+                neigbour.Node.Parent = visitingNode;
+                neigbour.Node.DistanceFromRoute = vNodeRouteDist + vNodeToNNodeDist;
+                Q.Enqueue(neigbour.Node, neigbour.Node.DistanceFromRoute);
+            }
         }
     }
 
-
+    Console.WriteLine($"Shortest Path: {e.DistanceFromRoute}");
+    Console.WriteLine($"Shortest Route: {GetShortestRoute(e)}");
 }
 
-Console.ReadKey();
+string GetShortestRoute(Node endNode)
+{
+    var name = endNode.Name;
+
+    if (endNode.Parent != null)
+    {
+        return $"{GetShortestRoute(endNode.Parent)} => {name} ";
+    }
+    else
+    {
+        return name;
+    }
+}
 
